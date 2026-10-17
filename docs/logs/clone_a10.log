@@ -1,0 +1,27 @@
+﻿git worktree add kiem_tra_ban_nop_N24DCDT022 HEAD   (clone sach tu commit C)
+HEAD kiem tra: 03cba1ae318d98e26a1927e64c78c4f7399a34ed
+julia --version  =>  julia version 1.13.1
+----- demo.jl --ca=1 -----
+======================================================================
+CA: A01 - Vi du 1 phieu [8,3,5,1,9,2] -> [1,2,3,5,8,9]
+Input  : [8, 3, 5, 1, 9, 2]
+Output : [1, 2, 3, 5, 8, 9]
+So sanh: 15  (n(n-1)/2 = 15)
+So doi : 5  (toi da n-1 = 5)
+Vi tri min tung luot: [4, 6, 6, 6, 6]
+----- demo.jl --ca=2 -----
+======================================================================
+CA: A02 - Vi du 2 phieu [2,1,2] -> [1,2,2]
+Input  : [2, 1, 2]
+Output : [1, 2, 2]
+So sanh: 3  (n(n-1)/2 = 3)
+So doi : 1  (toi da n-1 = 2)
+Vi tri min tung luot: [2, 2]
+----- test/runtests.jl -----
+Test Summary:                   | Pass  Total  Time
+DT011 - 12 ca chuc nang va bien |   41     41  0.2s
+Test Summary:                         | Pass  Total  Time
+DT011 - doi chieu ham con va bat bien | 2713   2713  0.3s
+Test Summary:                | Pass  Total  Time
+DT011 - kiem tra du lieu vao |    6      6  0.0s
+DA QUA BO KIEM THU DT011: 12 ca chuc nang, doi chieu ham con/bat bien va kiem tra du lieu vao.

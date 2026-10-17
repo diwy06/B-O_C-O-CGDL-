@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mô phỏng Sắp xếp lựa chọn — DT011 · Trần Hữu Duy</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#1e293b; --panel2:#263449; --border:#334155;
+    --text:#e2e8f0; --muted:#94a3b8;
+    --unsorted:#64748b; --scan:#38bdf8; --min:#f59e0b; --max:#c084fc; --swap:#ef4444; --sorted:#22c55e;
+    --accent:#818cf8;
+  }
+  *{box-sizing:border-box}
+  body{ margin:0; background:var(--bg); color:var(--text); font:16px/1.6 "Segoe UI",system-ui,Arial,sans-serif }
+  header{ padding:22px 28px; background:linear-gradient(135deg,#1e293b,#0f172a); border-bottom:1px solid var(--border) }
+  header h1{ margin:0 0 6px; font-size:26px }
+  header .sub{ color:var(--muted); font-size:15px }
+  main{ max-width:1240px; margin:auto; padding:24px 20px 60px }
+  .grid{ display:grid; grid-template-columns: 1fr 360px; gap:20px }
+  @media(max-width:960px){ .grid{ grid-template-columns:1fr } }
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px 20px }
+  .card h2{ margin:0 0 12px; font-size:18px; color:var(--accent) }
+  .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center }
+  button, select, input, label{ font:inherit }
+  button, input[type=text]{ padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--panel2); color:var(--text); cursor:pointer }
+  button:hover{ background:#31415e }
+  button.primary{ background:var(--accent); border-color:var(--accent); color:#0b1220; font-weight:600 }
+  input[type=text]{ font-family:Consolas,monospace; width:250px; cursor:text }
+  input[type=range]{ width:130px }
+  .stat{ display:flex; gap:14px; flex-wrap:wrap; margin:14px 0 }
+  .stat .box{ background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:10px 16px; min-width:104px }
+  .stat .box b{ display:block; font-size:22px }
+  .stat .box span{ color:var(--muted); font-size:13px }
+  #bars{ display:flex; align-items:flex-end; gap:8px; min-height:210px; padding:10px 4px; overflow-x:auto }
+  .bar{ flex:1 1 0; min-width:34px; background:var(--unsorted); border-radius:6px 6px 0 0; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; padding:6px 0; transition:background .18s,height .25s; font-weight:700; color:#0b1220 }
+  .bar small{ font-size:12px; margin-top:auto; color:#fff; text-shadow:0 1px 2px #000 }
+  .bar.sorted{ background:var(--sorted) }
+  .bar.min{ background:var(--min) }
+  .bar.max{ background:var(--max) }
+  .bar.scan{ background:var(--scan) }
+  .bar.swap{ background:var(--swap) }
+  .bar.idx-i{ box-shadow:inset 0 0 0 2px #fff }
+  .legend{ display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; color:var(--muted); font-size:14px }
+  .legend span::before{ content:""; display:inline-block; width:14px; height:14px; border-radius:4px; margin-right:6px; vertical-align:-2px }
+  .lg-unsorted::before{ background:var(--unsorted) } .lg-scan::before{ background:var(--scan) }
+  .lg-min::before{ background:var(--min) } .lg-max::before{ background:var(--max) }
+  .lg-swap::before{ background:var(--swap) } .lg-sorted::before{ background:var(--sorted) }
+  table{ width:100%; border-collapse:collapse; font-size:14px }
+  th,td{ border:1px solid var(--border); padding:6px 8px; text-align:center }
+  th{ background:var(--panel2) }
+  td.mono{ font-family:Consolas,monospace; font-size:13px; text-align:left }
+  .trace-wrap{ max-height:300px; overflow-y:auto }
+  .logline{ font-family:Consolas,monospace; font-size:13px; color:#cbd5e1; padding:2px 0; border-bottom:1px dashed var(--border) }
+  /* pseudocode */
+  #pseudo{ font-family:Consolas,monospace; font-size:13.5px; line-height:1.9; white-space:pre; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; overflow-x:auto }
+  #pseudo .pl{ padding:0 6px; border-radius:4px }
+  #pseudo .pl.hot{ background:var(--accent); color:#0b1220; font-weight:700 }
+  #pseudo .pl.dim{ color:var(--muted) }
+  /* đối đầu */
+  .duel{ display:flex; gap:10px; margin-top:10px }
+  .duel .side{ flex:1; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:10px }
+  .duel .side h3{ margin:0 0 6px; font-size:14px }
+  .mini{ display:flex; align-items:flex-end; gap:3px; height:110px }
+  .mini .mb{ flex:1 1 0; min-width:12px; border-radius:3px 3px 0 0; background:var(--unsorted); font-size:10px; text-align:center; color:#0b1220; padding-top:2px }
+  .mini .mb.done{ background:var(--sorted) }
+  .mini .mb.hot{ background:var(--swap) }
+  .duel .cnt{ font-size:20px; font-weight:800 }
+  .duel .cnt span{ font-size:12px; color:var(--muted); font-weight:400 }
+  .cmp .big{ font-size:26px; font-weight:800 }
+  .cmp .lbl{ color:var(--muted); font-size:13px }
+  canvas{ width:100%; border:1px solid var(--border); border-radius:10px; background:var(--panel2) }
+  footer{ color:var(--muted); font-size:13px; text-align:center; padding:10px }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔢 Mô phỏng Sắp xếp lựa chọn và tiết kiệm đổi chỗ</h1>
+  <div class="sub">Đề DT011 — Trần Hữu Duy (N24DCDT022) · INT13185 · Chương 2, Mục 2.2.2 · Julia 1.13.1</div>
+</header>
+
+<main>
+<div class="grid">
+  <!-- ============ CỘT TRÁI ============ -->
+  <div>
+    <div class="card">
+      <h2>1. Dữ liệu vào và điều khiển</h2>
+      <div class="row">
+        <input type="text" id="input" value="8,3,5,1,9,2" placeholder="Nhập dãy số, cách nhau dấu phẩy">
+        <button class="primary" onclick="napDuLieu()">Nạp dãy</button>
+        <button onclick="ngauNhien()">Ngẫu nhiên</button>
+        <label>Tốc độ <input type="range" id="speed" min="1" max="10" value="6"></label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <span style="color:var(--muted)">Mẫu:</span>
+        <button onclick="napMau('8,3,5,1,9,2')">Ví dụ 1</button>
+        <button onclick="napMau('2,1,2')">Ví dụ 2</button>
+        <button onclick="napMau('9,7,5,3,1')">Giảm dần</button>
+        <button onclick="napMau('5,1,4,1,3')">Có trùng</button>
+        <button onclick="napMau('1,2,3')">Đã tăng</button>
+        <button onclick="napMau('4,4,4')">Toàn trùng</button>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <label style="display:flex;align-items:center;gap:6px;color:var(--muted)">
+          <input type="checkbox" id="giam" onchange="reset()"> Sắp <b style="color:var(--max)">giảm dần</b> (chọn max)
+        </label>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="primary" onclick="chay()">▶ Chạy</button>
+        <button onclick="buoc()">⏭ Từng bước</button>
+        <button onclick="dung()">⏸ Dừng</button>
+        <button onclick="reset()">↺ Reset</button>
+        <button onclick="chayDenHet()">⏩ Tới cuối</button>
+        <button onclick="copyTrace()">📋 Chép truy vết</button>
+      </div>
+      <div class="stat">
+        <div class="box"><b id="soSanh">0</b><span>So sánh</span></div>
+        <div class="box"><b id="soDoi">0</b><span>Đổi chỗ thực</span></div>
+        <div class="box"><b id="luot">0</b><span>Lượt</span></div>
+        <div class="box"><b id="vitriMin">–</b><span id="nhanMin">Vị trí min</span></div>
+        <div class="box"><b id="soGan">0</b><span>Phép gán (đổi)</span></div>
+      </div>
+      <div id="bars"></div>
+      <div class="legend" id="legend">
+        <span class="lg-unsorted">Chưa sắp</span>
+        <span class="lg-scan">Đang so sánh (j)</span>
+        <span class="lg-min">Ứng viên min</span>
+        <span class="lg-swap">Đang đổi chỗ</span>
+        <span class="lg-sorted">Đã cố định</span>
+        <span>▢ viền trắng = vị trí i</span>
+      </div>
+      <div id="thongBao" style="margin-top:12px; color:var(--accent); min-height:22px"></div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h2>2. Bảng truy vết từng lượt</h2>
+      <div class="trace-wrap">
+        <table>
+          <thead><tr><th>Lượt</th><th>Đoạn quét</th><th id="hMin">Vị trí min</th><th>Thao tác</th><th>Mảng sau lượt</th></tr></thead>
+          <tbody id="traceBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h2>3. Đối đầu trực quan: Lựa chọn vs Đổi chỗ</h2>
+      <p style="color:var(--muted); font-size:14px; margin:0 0 8px">Cùng chạy trên một dãy, từng bước song song — xem <b>số lần đổi chỗ</b> tách xa nhau dù số so sánh bằng nhau.</p>
+      <div class="row">
+        <button class="primary" onclick="doiDau()">▶ Chạy đối đầu</button>
+        <button onclick="dungDau()">⏸ Dừng</button>
+        <button onclick="doiDauReset()">↺ Reset</button>
+        <label>Tốc độ <input type="range" id="duelSpeed" min="1" max="10" value="7"></label>
+      </div>
+      <div class="duel">
+        <div class="side">
+          <h3 style="color:var(--sorted)">Lựa chọn (selection)</h3>
+          <div class="mini" id="miniSel"></div>
+          <div class="cnt"><span id="dSelDoi">0</span> <span>đổi</span> · <span id="dSelSs">0</span> <span>so sánh</span></div>
+        </div>
+        <div class="side">
+          <h3 style="color:var(--swap)">Đổi chỗ (exchange)</h3>
+          <div class="mini" id="miniExch"></div>
+          <div class="cnt"><span id="dExchDoi">0</span> <span>đổi</span> · <span id="dExchSs">0</span> <span>so sánh</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CỘT PHẢI ============ -->
+  <div>
+    <div class="card">
+      <h2>Giả mã (đang chạy tô sáng)</h2>
+      <div id="pseudo"></div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h2>Độ phức tạp: n(n−1)/2 so sánh</h2>
+      <canvas id="chart" height="220"></canvas>
+      <div style="font-size:13px;color:var(--muted);margin-top:8px">
+        Thời gian O(n²) — số so sánh không đổi với mọi dữ liệu vào; số đổi chỗ ≤ n−1.
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h2>Kết quả cuối</h2>
+      <div class="cmp">
+        <div>Lựa chọn: <b class="big" id="cLua">–</b> <span class="lbl">đổi chỗ</span></div>
+        <div>Đổi chỗ: <b class="big" id="cDoi">–</b> <span class="lbl">đổi chỗ</span></div>
+        <div class="lbl" id="cKq" style="margin-top:6px"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h2>Nhật ký thực thi</h2>
+      <div id="log" class="trace-wrap" style="max-height:260px"></div>
+    </div>
+  </div>
+</div>
+</main>
+<footer>Mô phỏng học tập · không thay báo cáo và bằng chứng chạy thật (Julia 1.13.1)</footer>
+
+<script>
+"use strict";
+// ==================== Trạng thái chính ====================
+let goc = [8,3,5,1,9,2];
+let a = [];
+let i = 0, j = 1, minIdx = 0;
+let soSanh = 0, soDoi = 0, soGan = 0;
+let cacMin = [];
+let chayRoi = false;
+let timer = null;
+let trace = [];
+let logLines = [];
+
+// ==================== Giả mã ====================
+function pseudoLines(){
+  const giam = document.getElementById('giam').checked;
+  const cmp = giam ? "b[j] > b[maxIdx]" : "b[j] < b[minIdx]";
+  const v = giam ? "max" : "min";
+  return [
+    `b ← copy(a); soSanh ← 0; soDoi ← 0`,
+    `for i ← 1 .. n−1`,
+    `    ${v}Idx ← i`,
+    `    for j ← i+1 .. n`,
+    `        soSanh ← soSanh + 1`,
+    `        if ${cmp} then`,
+    `            ${v}Idx ← j`,
+    `    if ${v}Idx ≠ i then`,
+    `        đổi b[i], b[${v}Idx]; soDoi ← soDoi + 1`,
+    `return (b, soSanh, soDoi, vị trí ${v})`
+  ];
+}
+let curLine = 0;
+function renderPseudo(){
+  const lines = pseudoLines();
+  const giam = document.getElementById('giam').checked;
+  const el = document.getElementById('pseudo');
+  el.innerHTML = lines.map((ln, k)=>{
+    const hot = (k===curLine);
+    const dim = (!giam && (ln.includes('maxIdx'))) || (giam && (ln.includes('minIdx')));
+    return `<div class="pl ${hot?'hot':(dim?'dim':'')}">${(k+1).toString().padStart(2)}  ${ln.replace(/</g,'&lt;')}</div>`;
+  }).join('');
+}
+
+// ==================== Khởi tạo ====================
+function napDuLieu(){
+  const raw = document.getElementById('input').value.trim();
+  const parts = raw.split(/[,\s;]+/).filter(x=>x!=='');
+  const arr = parts.map(Number);
+  if(arr.length===0 || arr.some(x=>!Number.isInteger(x))){ alert('Nhập dãy số nguyên, cách nhau dấu phẩy.'); return; }
+  if(arr.length>60){ alert('Giới hạn minh hoạ tối đa 60 phần tử.'); return; }
+  goc = arr; reset();
+}
+function napMau(s){ document.getElementById('input').value = s; napDuLieu(); }
+function ngauNhien(){
+  const n = 6 + Math.floor(Math.random()*4);
+  document.getElementById('input').value = Array.from({length:n},()=> Math.floor(Math.random()*21)-10).join(',');
+  napDuLieu();
+}
+function reset(){
+  a = goc.slice(); i=0; j=1; minIdx=0; soSanh=0; soDoi=0; soGan=0; cacMin=[]; chayRoi=false;
+  trace=[]; logLines=[]; dung(); curLine=0;
+  render(); document.getElementById('traceBody').innerHTML=''; document.getElementById('log').innerHTML='';
+  document.getElementById('thongBao').textContent='';
+  renderPseudo(); doiDauReset(); capNhatNhan();
+}
+function capNhatNhan(){
+  const giam = document.getElementById('giam').checked;
+  document.getElementById('nhanMin').textContent = giam ? 'Vị trí max' : 'Vị trí min';
+  document.getElementById('hMin').textContent = giam ? 'Vị trí max' : 'Vị trí min';
+  const lg = document.getElementById('legend');
+  const m = lg.querySelector('.lg-min');
+  if(m){ m.className = giam ? 'lg-max' : 'lg-min'; m.textContent = giam ? 'Ứng viên max' : 'Ứng viên min'; }
+}
+
+// ==================== Từng bước ====================
+function totHon(x, y){ return document.getElementById('giam').checked ? (x > y) : (x < y); }
+function tenVi(){ return document.getElementById('giam').checked ? 'max' : 'min'; }
+
+function buoc(){
+  if(chayRoi){ document.getElementById('thongBao').textContent='✅ Đã sắp xong!'; return; }
+  const n = a.length, giam = document.getElementById('giam').checked;
+  if(n<=1){ chayRoi=true; curLine=9; render(); renderPseudo(); document.getElementById('thongBao').textContent='✅ Dãy ≤ 1 phần tử, không cần sắp.'; return; }
+
+  if(j < n){
+    soSanh++;
+    curLine = 5;
+    logLines.push(`Lượt ${i+1}: so sánh a[${j+1}]=${a[j]} với ${tenVi()} a[${minIdx+1}]=${a[minIdx]}`);
+    if(totHon(a[j], a[minIdx])){
+      minIdx = j;
+      curLine = 7;
+      logLines.push(`   → cập nhật ${tenVi()} = vị trí ${minIdx+1} (${a[minIdx]})`);
+    }
+    j++;
+  } else {
+    const viTri = minIdx+1;
+    cacMin.push(viTri);
+    curLine = 8;
+    let thaoTac;
+    if(minIdx !== i){
+      const tmp = a[i]; a[i] = a[minIdx]; a[minIdx] = tmp;
+      soDoi++; soGan += 2;
+      curLine = 9;
+      thaoTac = `Đổi a[${i+1}]↔a[${minIdx+1}]`;
+      logLines.push(`Lượt ${i+1}: ${tenVi()}=${viTri} → ĐỔI CHỖ a[${i+1}](${a[minIdx]}) ↔ a[${minIdx+1}](${a[i]})`);
+    } else {
+      thaoTac = 'Không đổi (đúng vị trí)';
+      logLines.push(`Lượt ${i+1}: ${tenVi()}=${viTri} → KHÔNG đổi chỗ`);
+    }
+    trace.push({ luot:i+1, doan:`[${i+1}..${n}]`, min:viTri, thaoTac, mangSau:a.join(',') });
+    i++; minIdx = i; j = i+1;
+    if(i >= n-1){ chayRoi=true; curLine=9; document.getElementById('thongBao').textContent='✅ Hoàn tất sắp xếp!'; }
+  }
+  render();
+  renderPseudo();
+  if(chayRoi){ dung(); renderTrace(); renderLog(); }
+}
+
+// ==================== Chạy tự động ====================
+function chay(){ dung(); if(chayRoi) return; timer=setInterval(buoc, 920 - document.getElementById('speed').value*70); }
+function dung(){ if(timer){ clearInterval(timer); timer=null; } }
+function chayDenHet(){ dung(); let g=0; while(!chayRoi && g<100000){ buoc(); g++; } renderTrace(); renderLog(); }
+
+// ==================== Vẽ ====================
+function render(){
+  const wrap = document.getElementById('bars'); wrap.innerHTML='';
+  const n = a.length, giam = document.getElementById('giam').checked;
+  if(n===0){ wrap.innerHTML='<div style="color:var(--muted)">(mảng rỗng)</div>'; return; }
+  const maxAbs = Math.max(...a.map(Math.abs), 1);
+  a.forEach((v,k)=>{
+    const d = document.createElement('div'); d.className='bar';
+    const h = 30 + Math.round(150 * (Math.abs(v)/maxAbs || 0.15));
+    d.style.height = h+'px';
+    if(chayRoi || k < i) d.classList.add('sorted');
+    else if(k===minIdx) d.classList.add(giam?'max':'min');
+    else if(k===j) d.classList.add('scan');
+    if(k===i && !chayRoi) d.classList.add('idx-i');
+    d.innerHTML = `<span>${v}</span><small>${k+1}</small>`;
+    wrap.appendChild(d);
+  });
+  document.getElementById('soSanh').textContent = soSanh;
+  document.getElementById('soDoi').textContent = soDoi;
+  document.getElementById('soGan').textContent = soGan;
+  document.getElementById('luot').textContent = i;
+  document.getElementById('vitriMin').textContent = (a.length<=1 ? '–' : (minIdx+1));
+  renderTrace(); renderLog(); veChart(); tinhKetQuaCuoi();
+}
+function renderTrace(){
+  const tb = document.getElementById('traceBody'); tb.innerHTML='';
+  trace.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.luot}</td><td>${r.doan}</td><td>${r.min}</td><td>${r.thaoTac}</td><td class="mono">${r.mangSau}</td>`;
+    tb.appendChild(tr);
+  });
+}
+function renderLog(){
+  const lg = document.getElementById('log');
+  lg.innerHTML = logLines.slice(-80).map(l=>`<div class="logline">${l}</div>`).join('');
+  lg.scrollTop = lg.scrollHeight;
+}
+function copyTrace(){
+  const txt = trace.map(r=>`Lượt ${r.luot}: đoạn ${r.doan}, vị trí min/max ${r.min}, ${r.thaoTac} → ${r.mangSau}`).join('\n');
+  const done = ()=>document.getElementById('thongBao').textContent='📋 Đã chép bảng truy vết vào clipboard!';
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done).catch(()=>{ fallback(); }); }
+  else fallback();
+  function fallback(){
+    const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ alert('Không chép được, sao chép thủ công.'); }
+    document.body.removeChild(ta);
+  }
+}
+
+// ==================== Biểu đồ độ phức tạp ====================
+function veChart(){
+  const c = document.getElementById('chart');
+  const ctx = c.getContext('2d');
+  const W = c.width = c.clientWidth || 320, H = c.height = 220;
+  ctx.clearRect(0,0,W,H);
+  const data = [[5,10],[20,190],[100,4950],[500,124750]];
+  const pad=40, bw=(W-pad*2)/data.length;
+  ctx.fillStyle='#94a3b8'; ctx.font='12px Consolas';
+  data.forEach(([n,v],k)=>{
+    const h = (Math.log10(v+1)/Math.log10(124751)) * (H-pad-30);
+    const x = pad + k*bw + 6, y = H-pad-h, w = bw-14;
+    const grad = ctx.createLinearGradient(0,y,0,H-pad);
+    grad.addColorStop(0,'#818cf8'); grad.addColorStop(1,'#22c55e');
+    ctx.fillStyle=grad; ctx.fillRect(x,y,w,h);
+    ctx.fillStyle='#e2e8f0'; ctx.textAlign='center';
+    ctx.fillText(v.toLocaleString('vi'), x+w/2, y-6);
+    ctx.fillStyle='#94a3b8';
+    ctx.fillText('n='+n, x+w/2, H-pad+16);
+  });
+  ctx.fillStyle='#64748b'; ctx.font='11px Consolas'; ctx.textAlign='center';
+  ctx.fillText('so sánh = n(n−1)/2  (trục chiều cao theo log10)', W/2, 14);
+}
+
+// ==================== Kết quả cuối ====================
+function selectionCount(arr){ const b=arr.slice(); let ss=0,sd=0;
+  for(let k=0;k<b.length-1;k++){ let m=k; for(let t=k+1;t<b.length;t++){ ss++; if(b[t]<b[m]) m=t; } if(m!==k){ const z=b[k];b[k]=b[m];b[m]=z; sd++; } }
+  return {ss,sd,kq:b}; }
+function exchangeCount(arr){ const b=arr.slice(); let ss=0,sd=0;
+  for(let k=0;k<b.length-1;k++){ for(let t=k+1;t<b.length;t++){ ss++; if(b[t]<b[k]){ const z=b[k];b[k]=b[t];b[t]=z; sd++; } } }
+  return {ss,sd,kq:b}; }
+function tinhKetQuaCuoi(){
+  const l=selectionCount(goc), d=exchangeCount(goc);
+  document.getElementById('cLua').textContent=l.sd;
+  document.getElementById('cDoi').textContent=d.sd;
+  document.getElementById('cKq').textContent = 'Dãy → ' + l.kq.join(',') + ' · so sánh (cả hai) = ' + l.ss;
+}
+
+// ==================== ĐỐI ĐẦU (song song) ====================
+let selEv=[], exchEv=[], selI=0, exchI=0, duelTimer=null;
+function buildSelEvents(arr){
+  const b=arr.slice(); const ev=[]; let ss=0,sd=0;
+  for(let i=0;i<b.length-1;i++){ let m=i;
+    for(let j=i+1;j<b.length;j++){ ss++; if(b[j]<b[m]) m=j; ev.push({a:b.slice(),ss,sd,hot:[]}); }
+    if(m!==i){ const z=b[i];b[i]=b[m];b[m]=z; sd++; ev.push({a:b.slice(),ss,sd,hot:[i,m]}); }
+  }
+  return ev;
+}
+function buildExchEvents(arr){
+  const b=arr.slice(); const ev=[]; let ss=0,sd=0;
+  for(let i=0;i<b.length-1;i++){ for(let j=i+1;j<b.length;j++){ ss++;
+    if(b[j]<b[i]){ const z=b[i];b[i]=b[j];b[j]=z; sd++; ev.push({a:b.slice(),ss,sd,hot:[i,j]}); }
+    else ev.push({a:b.slice(),ss,sd,hot:[]});
+  } }
+  return ev;
+}
+function doiDau(){
+  doiDauReset(); selEv=buildSelEvents(goc); exchEv=buildExchEvents(goc);
+  duelTimer=setInterval(duelStep, 900 - document.getElementById('duelSpeed').value*70);
+}
+function duelStep(){
+  if(selI < selEv.length){ const e=selEv[selI++]; renderMini('miniSel', e.a, e.hot); document.getElementById('dSelDoi').textContent=e.sd; document.getElementById('dSelSs').textContent=e.ss; }
+  if(exchI < exchEv.length){ const e=exchEv[exchI++]; renderMini('miniExch', e.a, e.hot); document.getElementById('dExchDoi').textContent=e.sd; document.getElementById('dExchSs').textContent=e.ss; }
+  if(selI>=selEv.length && exchI>=exchEv.length){ dungDau(); }
+}
+function dungDau(){ if(duelTimer){ clearInterval(duelTimer); duelTimer=null; } }
+function doiDauReset(){
+  dungDau(); selEv=[]; exchEv=[]; selI=0; exchI=0;
+  renderMini('miniSel', goc, []); renderMini('miniExch', goc, []);
+  document.getElementById('dSelDoi').textContent=0; document.getElementById('dExchDoi').textContent=0;
+  document.getElementById('dSelSs').textContent=0; document.getElementById('dExchSs').textContent=0;
+}
+function renderMini(id, arr, hot){
+  const wrap=document.getElementById(id); wrap.innerHTML='';
+  const n=arr.length; if(n===0){ wrap.innerHTML='<div style="color:var(--muted)">(rỗng)</div>'; return; }
+  const mx=Math.max(...arr.map(Math.abs),1);
+  arr.forEach((v,k)=>{
+    const d=document.createElement('div'); d.className='mb';
+    d.style.height=(20+80*(Math.abs(v)/mx))+'px';
+    if(hot.includes(k)) d.classList.add('hot');
+    d.textContent=v;
+    wrap.appendChild(d);
+  });
+}
+
+// khởi động
+renderPseudo();
+reset();
+</script>
+</body>
+</html>
