@@ -27,8 +27,9 @@ end
     tim_min_doan(a, l, r)
 
 Trả chỉ số (1-based) của phần tử nhỏ nhất trong đoạn `a[l:r]`.
-Khi có nhiều phần tử bằng nhau và cùng nhỏ nhất, giữ chỉ số đầu tiên
-(gặp giá trị nhỏ hơn hẳn mới cập nhật), đảm bảo kết quả ổn định.
+Khi có nhiều phần tử cùng nhỏ nhất, giữ chỉ số đầu tiên (chỉ cập nhật khi
+gặp giá trị nhỏ hơn hẳn). Lưu ý: việc giữ chỉ số đầu tiên KHÔNG làm thuật
+toán sắp xếp ổn định — xem ghi chú ở `sap_xep_lua_chon`.
 Đoạn `l == r` trả chính `l`.
 """
 function tim_min_doan(a, l::Integer, r::Integer)
@@ -47,23 +48,31 @@ end
 
 Sắp xếp lựa chọn (selection sort) theo phiếu DT011. Trả về `NamedTuple`:
   - `mang`      : bản sao đã sắp tăng dần;
-  - `so_sanh`   : số phép so sánh (luôn n(n-1)/2);
+  - `so_sanh`   : số phép so sánh thực đếm trong vòng lặp (= n(n-1)/2);
   - `so_doi`    : số phép hoán đổi thực sự (không quá n-1);
   - `cac_min`   : vị trí min được chọn ở mỗi lượt (độ dài n-1).
 
-Mỗi lượt i quét đoạn `a[i:n]` tìm min rồi chỉ đổi khi `min_idx != i`,
-nên không tính phép đổi một ô với chính nó.
+Hàm tự kiểm tra đầu vào bằng `kiem_tra_dau_vao`. Mỗi lượt i quét đoạn a[i:n]
+bằng một vòng lặp đếm so sánh thật, rồi chỉ đổi khi `min_idx != i`.
+
+Cảnh báo: sắp xếp lựa chọn KHÔNG ổn định. Ví dụ [(2,'a'),(2,'b'),(1,'c')]
+cho [(1,'c'),(2,'b'),(2,'a')] — hai phần tử khóa 2 bị đảo thứ tự tương đối.
 """
 function sap_xep_lua_chon(a)
+    kiem_tra_dau_vao(a)
     b = copy(a)
     n = length(b)
     so_sanh = 0
     so_doi = 0
     cac_min = Int[]
     for i in 1:(n - 1)
-        min_idx = tim_min_doan(b, i, n)
-        # tim_min_doan thực hiện đúng (n - i) phép so sánh.
-        so_sanh += n - i
+        min_idx = i
+        for j in (i + 1):n
+            so_sanh += 1
+            if b[j] < b[min_idx]
+                min_idx = j
+            end
+        end
         push!(cac_min, min_idx)
         if min_idx != i
             b[i], b[min_idx] = b[min_idx], b[i]
@@ -105,9 +114,10 @@ end
 Sắp xếp đổi chỗ (exchange sort, giáo trình mục 2.2.1) dùng để đối chứng:
 đổi `a[i]` với `a[j]` ngay khi `a[j] < a[i]`. Cùng thực hiện n(n-1)/2 phép
 so sánh như sắp xếp lựa chọn nhưng số phép đổi chỗ nhiều hơn hẳn.
-Trả về `NamedTuple` gồm `mang`, `so_sanh`, `so_doi`.
+Hàm tự kiểm tra đầu vào. Trả về `NamedTuple` gồm `mang`, `so_sanh`, `so_doi`.
 """
 function sap_xep_doi_cho(a)
+    kiem_tra_dau_vao(a)
     b = copy(a)
     n = length(b)
     so_sanh = 0

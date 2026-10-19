@@ -7,7 +7,7 @@ include(joinpath(@__DIR__, "..", "src", "DeTai.jl"))
 using .DeTai
 
 # Kiểm tra bất biến chung: output tăng dần, là hoán vị của input,
-# số so sánh đúng n(n-1)/2, số đổi chỗ không quá n-1, vị trí min khớp tham chiếu.
+# số so sánh đếm thực đúng n(n-1)/2, số đổi chỗ không quá n-1.
 function kiem_bat_bien(a)
     kq = sap_xep_lua_chon(a)
     n = length(a)
@@ -20,18 +20,14 @@ function kiem_bat_bien(a)
     return kq
 end
 
-# Tham chiếu độc lập: tự quét tay để có vị trí min từng lượt.
+# Tham chiếu dùng argmin CÓ SẴN của Julia (độc lập với vòng lặp tự cài),
+# để tránh trường hợp lõi và bản tham chiếu sai giống nhau.
 function _cac_min_tham_chieu(a)
     b = copy(a)
     n = length(b)
     out = Int[]
     for i in 1:(n - 1)
-        m = i
-        for j in (i + 1):n
-            if b[j] < b[m]
-                m = j
-            end
-        end
+        m = i - 1 + argmin(b[i:n])
         push!(out, m)
         if m != i
             b[i], b[m] = b[m], b[i]
@@ -60,6 +56,7 @@ end
     @test kq.mang == [1, 1, 3, 4, 5]
     @test kq.so_sanh == 10
     @test kq.so_doi == 4
+    @test kq.cac_min == [2, 4, 5, 5]   # expected tính tay
 
     # TK02 — Tự thiết kế 2: mảng giảm dần.
     kq = sap_xep_lua_chon([9, 7, 5, 3, 1])
@@ -79,6 +76,7 @@ end
     @test kq.mang == [4, 4, 4]
     @test kq.so_sanh == 3
     @test kq.so_doi == 0
+    @test kq.cac_min == [1, 2]         # expected tính tay
 
     # BIEN03 — Một phần tử.
     kq = sap_xep_lua_chon([7])
@@ -104,19 +102,21 @@ end
     @test kq.mang == [-1000000, 0, 1000000]
     @test kq.so_sanh == 3
     @test kq.so_doi == 2
+    @test kq.cac_min == [2, 3]         # expected tính tay
 
     # KT11 — Toàn số 0.
     kq = sap_xep_lua_chon([0, 0, 0, 0])
     @test kq.mang == [0, 0, 0, 0]
     @test kq.so_sanh == 6
     @test kq.so_doi == 0
+    @test kq.cac_min == [1, 2, 3]      # expected tính tay
 
     # KT12 — Mảng tổng quát dài 8; kiểm bằng sort độc lập và bất biến.
     a = [3, 1, 4, 1, 5, 9, 2, 6]
     kq = sap_xep_lua_chon(a)
     @test kq.mang == sort(a)
     @test kq.so_sanh == 28
-    @test kq.so_doi <= 7
+    @test kq.so_doi == 6
     @test issorted(kq.mang)
 end
 
@@ -153,6 +153,9 @@ end
     @test_throws ArgumentError kiem_tra_dau_vao([10^6 + 1])          # LOI02: |a[i]| > 10^6
     @test_throws ArgumentError kiem_tra_dau_vao([-(10^6) - 1])       # LOI02b
     @test_throws ArgumentError kiem_tra_dau_vao([1.5, 2.0])          # LOI03: khong phai Vector{Int}
+    # Lõi tự kiểm: gọi thẳng cũng phải từ chối
+    @test_throws ArgumentError sap_xep_lua_chon(fill(0, 2001))
+    @test_throws ArgumentError sap_xep_doi_cho([10^6 + 1])
 end
 
 println("DA QUA BO KIEM THU DT011: 12 ca chuc nang, doi chieu ham con/bat bien va kiem tra du lieu vao.")
