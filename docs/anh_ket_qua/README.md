@@ -1,6 +1,6 @@
 # Ảnh kết quả DT011 — Trần Hữu Duy (N24DCDT022)
 
-Mỗi ảnh là output thật chạy bằng Julia 1.13.1 từ mã trong `src/DeTai.jl`.
+Mỗi ảnh là ảnh chụp màn hình thật từ VSCode 1.142.0 (terminal PowerShell) hoặc trình duyệt, chạy bằng Julia 1.13.1 từ mã trong `src/DeTai.jl`.
 
 | Mã ảnh | Hình trong báo cáo | Tệp | Lệnh tạo |
 |---|---|---|---|
@@ -12,10 +12,10 @@ Mỗi ảnh là output thật chạy bằng Julia 1.13.1 từ mã trong `src/DeT
 | A06 | 4.6 Biên 2 | `06_bien_2.png` | `demo.jl --ca=6` |
 | A07 | 4.7 Biên 3 | `07_bien_3.png` | `demo.jl --ca=7` |
 | A08 | 4.8 Input không hợp lệ | `08_input_khong_hop_le.png` | `demo.jl --ca=8` |
-| A09 | 4.9 Tổng kết kiểm thử | `09_tong_ket_kiem_thu.png` | `test_catalog.jl` + `runtests.jl` |
-| A10 | 4.10 Clone sạch | `10_clone_sach_chay_lai.png` | `git worktree add` + chạy lại demo/test |
-| A11 | 4.11 GitHub | `11_github_repo_commit.png` | **SV tự chụp repo/commit GitHub thật** |
+| A09 | 4.9 Tổng kết kiểm thử | `09_tong_ket_kiem_thu.png` | `julia --startup-file=no test/runtests.jl` |
+| A10 | 4.10 Clone sạch | `10_clone_sach_chay_lai.png` | clone từ GitHub (HEAD 6a61fff) + chạy lại test |
+| A11 | 4.11 GitHub | `11_github_repo_commit.png` | ảnh chụp commit C `03cba1a` trên GitHub |
 
-A11 hiện là ảnh hướng dẫn; sinh viên phải thay bằng ảnh GitHub thật của mình.
+
 
 Log gốc của từng lần chạy nằm trong `docs/logs/`.
