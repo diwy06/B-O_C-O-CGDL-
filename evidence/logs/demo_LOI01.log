@@ -1,0 +1,4 @@
+﻿[DT011] LOI01 - validator tu choi input sai
+  n = 2001 vuot gioi han                 -> ArgumentError: n = 2001 vuot gioi han 2000
+  |a[i]| = 10^6 + 1 vuot gioi han        -> ArgumentError: |a[1]| = 1000001 vuot gioi han 1000000
+  khong phai Vector{Int}                 -> ArgumentError: a phai la Vector{Int}, nhan duoc Vector{Float64}

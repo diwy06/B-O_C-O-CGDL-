@@ -1,0 +1,9 @@
+﻿[DT011] BIEN02  (Bien)
+  input   : [7]
+  output  : [7]
+  ky vong : [7]
+  so sanh : 0   (n(n-1)/2 = 0)
+  doi cho : 0   (toi da n-1 = 0)
+  min luot: Int64[]
+  ket qua : PASS
+

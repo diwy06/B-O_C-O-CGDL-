@@ -1,18 +1,20 @@
-param([string]$Julia='julia')
-$ErrorActionPreference='Stop'
-$codeRoot=$PSScriptRoot
-function Run-JuliaStep([string[]]$JuliaArgs) {
-    & $Julia @JuliaArgs
-    if ($LASTEXITCODE -ne 0) { throw ('Julia failed: '+($JuliaArgs -join ' ')) }
+param([string]$Julia = 'julia')
+$ErrorActionPreference = 'Stop'
+$root = $PSScriptRoot
+$cli  = Join-Path $root 'bin/dt011.jl'
+
+function Buoc([string]$ten, [string[]]$thamSo) {
+    Write-Host ''
+    Write-Host ('### ' + $ten) -ForegroundColor Cyan
+    & $Julia @thamSo
+    if ($LASTEXITCODE -ne 0) { throw ('Buoc that bai: ' + $ten) }
 }
-Run-JuliaStep @('--version')
-for ($caseId=1; $caseId -le 8; $caseId++) {
-    Write-Output ('=== DEMO '+$caseId+' ===')
-    Run-JuliaStep @('--startup-file=no',(Join-Path $codeRoot 'demo.jl'),('--ca='+$caseId))
-}
-Write-Output '=== SO SANH LUA CHON VS DOI CHO ==='
-Run-JuliaStep @('--startup-file=no',(Join-Path $codeRoot 'demo.jl'),'--so-sanh')
-Run-JuliaStep @('--startup-file=no',(Join-Path $codeRoot 'test/runtests.jl'))
-Run-JuliaStep @('--startup-file=no',(Join-Path $codeRoot 'scripts/test_catalog.jl'))
-Run-JuliaStep @('--startup-file=no',(Join-Path $codeRoot 'scripts/trace_and_scales.jl'))
-Write-Output 'END_TO_END_OK: demos, comparison, tests, catalog, trace and scales completed.'
+
+Buoc 'Phien ban'      @('--startup-file=no', $cli, 'version')
+Buoc 'Bo kiem thu'    @('--startup-file=no', $cli, 'check')
+Buoc 'Demo tat ca ca' @('--startup-file=no', $cli, 'demo', '--all')
+Buoc 'Lan vet VD01'   @('--startup-file=no', $cli, 'trace', '--case', 'VD01')
+Buoc 'Khao sat quy mo' @('--startup-file=no', $cli, 'bench', '--scales', '5,20,100,500', '--seed', '20261020')
+
+Write-Host ''
+Write-Host 'END_TO_END_OK: check, demo, trace va bench deu chay xong.' -ForegroundColor Green

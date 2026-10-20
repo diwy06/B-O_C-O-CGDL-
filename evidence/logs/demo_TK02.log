@@ -1,0 +1,9 @@
+﻿[DT011] TK02  (Tu thiet ke)
+  input   : [9, 7, 5, 3, 1]
+  output  : [1, 3, 5, 7, 9]
+  ky vong : [1, 3, 5, 7, 9]
+  so sanh : 10   (n(n-1)/2 = 10)
+  doi cho : 2   (toi da n-1 = 4)
+  min luot: [5, 4, 3, 4]
+  ket qua : PASS
+

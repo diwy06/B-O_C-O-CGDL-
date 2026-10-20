@@ -1,0 +1,9 @@
+﻿[DT011] VD02  (Vi du phieu)
+  input   : [2, 1, 2]
+  output  : [1, 2, 2]
+  ky vong : [1, 2, 2]
+  so sanh : 3   (n(n-1)/2 = 3)
+  doi cho : 1   (toi da n-1 = 2)
+  min luot: [2, 2]
+  ket qua : PASS
+

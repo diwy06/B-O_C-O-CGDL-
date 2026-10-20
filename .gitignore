@@ -1,6 +1,7 @@
-*.jl.cov
-*.jl.mem
-.DS_Store
-Thumbs.db
+.julia/
+Manifest.toml
 *.tmp
-~$*
+*.log
+!evidence/logs/*.log
+__pycache__/
+.vscode/

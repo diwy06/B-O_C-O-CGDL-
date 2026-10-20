@@ -1,98 +1,77 @@
 # DT011 — Sắp xếp lựa chọn và tiết kiệm đổi chỗ
 
-Báo cáo đồ án học phần **INT13185 — Cấu trúc dữ liệu và giải thuật, Nhóm 03**.
+Đồ án cá nhân INT13185 — Trần Hữu Duy — N24DCDT022 — D24CQDT01-N.
 
-- **Họ tên, MSSV, lớp:** Trần Hữu Duy — N24DCDT022 — D24CQDT01-N.
-- **Mã đề / tên đề:** DT011 — Sắp xếp lựa chọn và tiết kiệm đổi chỗ.
-- **Giáo trình:** *Cấu trúc dữ liệu và Giải thuật* INT1306, Chương 2, Mục 2.2.2;
-  bảng 2.2; mục 2.8 bài 3, 11, 19; trang in 35–37, 60–61; trang PDF 47–49, 72–73.
-- **Ngôn ngữ:** Julia (được kiểm với **Julia 1.13.1**, chỉ dùng thư viện chuẩn).
+Mã nguồn Julia thuần (chỉ thư viện chuẩn), không dùng package ngoài.
 
-## Bắt đầu
+## Yêu cầu
 
-Từ thư mục mã, chạy trong PowerShell:
+- Julia 1.13.1 (hoặc 1.10+)
+- Windows / Linux / macOS đều chạy được
 
-```powershell
-.\Run_all.ps1
+## Cấu trúc
+
+```
+.
+├── bin/dt011.jl          # CLI: demo, trace, bench, check, input, version
+├── src/DT011.jl          # module lõi (validator, tim min, sắp xếp, lần vết, đối chứng)
+├── spec/cases.jl         # dữ liệu 14 ca kiểm thử
+├── spec/runtests.jl      # bộ kiểm thử độc lập
+├── bench/scales.jl       # khảo sát theo quy mô
+├── evidence/logs/        # log chạy thật
+├── evidence/images/      # ảnh minh chứng
+├── Run_all.ps1           # chạy toàn bộ bằng một lệnh
+└── README.md
 ```
 
-Nếu `julia.exe` chưa có trên PATH, truyền đường dẫn:
+## Lệnh chạy
 
 ```powershell
-.\Run_all.ps1 -Julia 'DUONG_DAN_DEN_JULIA_EXE'
+# một ca
+julia --startup-file=no bin/dt011.jl demo --case VD01
+
+# toàn bộ ca + bảng tổng hợp + ca lỗi
+julia --startup-file=no bin/dt011.jl demo --all
+
+# lần vết từng lượt
+julia --startup-file=no bin/dt011.jl trace --case VD01
+julia --startup-file=no bin/dt011.jl trace --input "8,3,5,1,9,2"
+
+# khảo sát bốn quy mô
+julia --startup-file=no bin/dt011.jl bench --scales 5,20,100,500 --seed 20261020
+
+# bộ kiểm thử 14 ca
+julia --startup-file=no bin/dt011.jl check
+
+# nhập từ bàn phím
+julia --startup-file=no bin/dt011.jl input
 ```
 
-`Run_all.ps1` chạy lần lượt các lệnh dưới và dừng ngay khi một lệnh trả mã lỗi.
-Không cần CSV, Excel, mạng hay tệp dữ liệu ngoài.
+Hoặc chạy tất cả:
 
 ```powershell
-julia --startup-file=no demo.jl            # chạy toàn bộ 8 ca + so sánh đổi chỗ
-julia --startup-file=no demo.jl --ca=1     # chạy riêng ca 1..8
-julia --startup-file=no demo.jl --so-sanh  # chỉ in so sánh lựa chọn vs đổi chỗ
-julia --startup-file=no demo.jl --nhap     # nhập dữ liệu từ bàn phím
-julia --startup-file=no test/runtests.jl
-julia --startup-file=no scripts/test_catalog.jl
-julia --startup-file=no scripts/trace_and_scales.jl
+powershell -ExecutionPolicy Bypass -File .\Run_all.ps1
 ```
 
-## Hợp đồng bài toán
+## Hợp đồng dữ liệu
 
-- **Đầu vào:** `a::Vector{Int}`, `0 ≤ n ≤ 2000`, `|a[i]| ≤ 10^6`; phần tử trùng hợp lệ.
-  Nhập bàn phím hoặc khai báo trực tiếp; không đọc tệp dữ liệu ngoài.
-- **Đầu ra:** mảng tăng dần, số phép **so sánh**, số phép **hoán đổi thực sự** và
-  vị trí min được chọn ở mỗi lượt.
-- Mỗi lượt `i` quét đoạn `a[i:n]` tìm min rồi **chỉ đổi khi `min_index != i`**,
-  nên không tính phép đổi một ô với chính nó.
-- Luôn `n(n-1)/2` phép so sánh; số đổi chỗ không quá `n-1`; bộ nhớ phụ O(1).
+- `a::Vector{Int}`, `0 ≤ n ≤ 2000`, `|a[i]| ≤ 10^6`
+- Phần tử trùng hợp lệ; mảng rỗng hợp lệ
+- Ba hàm bắt buộc: `kiem_tra_dau_vao`, `tim_min_doan`, `sap_xep_lua_chon`,
+  `lan_vet_lua_chon`
+- Yêu cầu tùy chọn: `sap_xep_lua_chon(a; giam=true)` chọn max để sắp giảm dần
 
-## Các phần đã giải
+## Kết quả
 
-| Tệp | Vai trò |
-|---|---|
-| `src/DeTai.jl` | `kiem_tra_dau_vao`, `tim_min_doan`, `sap_xep_lua_chon`, `lan_vet_lua_chon`, `sap_xep_doi_cho` |
-| `demo.jl` | 8 ca minh hoạ A01–A08 + so sánh với sắp xếp đổi chỗ + nhập bàn phím |
-| `test/runtests.jl` | 12 ca chức năng/biên + đối chiếu hàm con/bất biến + kiểm tra dữ liệu vào |
-| `scripts/test_catalog.jl` | In input/expected/actual/PASS của 12 ca có mã |
-| `scripts/trace_and_scales.jl` | Truy vết T01 và khảo sát n = 5, 20, 100, 500 |
-| `Run_all.ps1` | Chạy toàn bộ quy trình bằng một lệnh |
+- 14/14 ca PASS, 137 phép kiểm đạt (log `evidence/logs/check.log`)
+- Ví dụ 1: `[8,3,5,1,9,2] → [1,2,3,5,8,9]`, 15 so sánh, 5 đổi chỗ, min `[4,6,6,6,6]`
+- Ví dụ 2: `[2,1,2] → [1,2,2]`, 3 so sánh, 1 đổi chỗ, min `[2,2]`
+- Đối chứng `[9,7,5,3,1]`: lựa chọn 2 đổi chỗ, đổi chỗ 10 đổi chỗ
+- Khảo sát n = 5/20/100/500: số so sánh `10 / 190 / 4.950 / 124.750`, đổi chỗ lựa chọn
+  `4 / 15 / 93 / 492`, đổi chỗ của đổi chỗ `6 / 111 / 2.383 / 64.815`
 
-## Lập luận và kiểm chứng
+## Ghi chú
 
-Sau lượt `i`, `i` phần tử đầu đã cố định đúng vị trí tăng dần; vòng lặp ngoài
-chạy `n-1` lần nên dừng. Vòng trong luôn so sánh đúng `n-i` lần, cộng lại bằng
-`n(n-1)/2`. Chỉ thực hiện đổi chỗ sau khi quét hết đoạn và khi `min_index != i`,
-nên tối đa `n-1` phép đổi chỗ. Đây chính là điểm khác biệt với sắp xếp đổi chỗ
-(mục 2.2.1): cùng `n(n-1)/2` phép so sánh nhưng đổi chỗ nhiều hơn hẳn, vì vậy
-tuy cùng lớp O(n²) nhưng lựa chọn thay đổi mảng ít hơn.
-
-## Phiên bản và chạy lại
-
-- Commit **C** chứa mã/test/input dùng tạo kết quả; ghi SHA C đầy đủ và permalink
-  hàm chính/test trong báo cáo.
-- Commit **S** là phiên bản nộp cuối sau khi thêm ảnh/báo cáo; ghi SHA S trong
-  `ThongTinNop.txt` nộp rời (không đưa SHA của chính S vào S).
-
-```powershell
-git init
-git add README.md .gitignore src demo.jl test scripts docs
-git commit -m "Hoan thanh de tai DT011 va bang chung"
-git branch -M main
-git remote add origin https://github.com/TEN_TAI_KHOAN/TEN_REPO.git
-git push -u origin main
-git rev-parse HEAD
-```
-
-Clone sạch và chạy lại:
-
-```powershell
-git clone https://github.com/TEN_TAI_KHOAN/TEN_REPO.git kiem_tra_ban_nop_N24DCDT022
-cd kiem_tra_ban_nop_N24DCDT022
-git rev-parse HEAD
-.\Run_all.ps1
-```
-
-## Quy ước nộp Classroom
-
-Nộp đủ bốn tệp đúng tên `N24DCDT022_DT011_TranHuuDuy_*` (Word, PDF, ZIP mã, TXT).
-Repo riêng tư phải cấp quyền cho giảng viên trước hạn nộp. Không đưa token/mật
-khẩu vào repo hoặc báo cáo.
+- Không dùng `sort` trong lõi thuật toán; `sort` chỉ dùng làm oracle trong kiểm thử.
+- Sắp xếp lựa chọn không ổn định: khi trùng khóa, thứ tự tương đối có thể đổi.
+- Số so sánh luôn bằng `n(n-1)/2`, không phụ thuộc dữ liệu; số đổi chỗ ≤ `n-1`.
