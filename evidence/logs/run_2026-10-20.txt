@@ -1,0 +1,60 @@
+﻿=== DT011 EVIDENCE RUN 2026-10-20 22:43:52 ===
+Host: LAPTOP-VFDRDDO8 | User: LENOVO | Julia: julia version 1.13.1
+Commit: 05fca2143b988ecb3231023d95aa79d4cf676432
+
+--- check ---
+Test Summary:         | Pass  Total  Time
+DT011 - 14 ca doc lap |  137    137  1.3s
+
+KET QUA: 14/14 ca (13 ca du lieu + LOI01); 137 phep kiem dat.
+--- demo --all ---
+[DT011] DEMO toan bo ca
+
+[DT011] TONG HOP 13 ca
+Ma           n   So sanh   Doi cho   Ket qua
+---------------------------------------------
+VD01         6        15         5   PASS
+VD02         3         3         1   PASS
+TK01         5        10         4   PASS
+TK02         5        10         2   PASS
+BIEN01       0         0         0   PASS
+BIEN02       1         0         0   PASS
+BIEN03       3         3         0   PASS
+BIEN04       3         3         0   PASS
+KT01         5        10         3   PASS
+KT02         3         3         2   PASS
+KT03         2         1         1   PASS
+KT04       100      4950         0   PASS
+KT05        50      1225        45   PASS
+---------------------------------------------
+Tong ket: 13/13 ca PASS
+
+[DT011] DEMO LOI01 - validator tu choi input sai
+  n = 2001 vuot gioi han                 -> ArgumentError: n = 2001 vuot gioi han 2000
+  |a[i]| = 10^6 + 1 vuot gioi han        -> ArgumentError: |a[1]| = 1000001 vuot gioi han 1000000
+  khong phai Vector{Int}                 -> ArgumentError: a phai la Vector{Int}, nhan duoc Vector{Float64}
+--- trace VD01 ---
+[DT011] TRACE
+BANG LAN VET - DT011 (chon min moi luot)
+Mang dau: [8, 3, 5, 1, 9, 2]   n = 6
+Luot Doan chua sap           Chon  Doi cho     Mang sau luot
+---------------------------------------------------------------------
+1    [8, 3, 5, 1, 9, 2]      4     1 <-> 4     [1, 3, 5, 8, 9, 2]
+2    [3, 5, 8, 9, 2]         6     2 <-> 6     [1, 2, 5, 8, 9, 3]
+3    [5, 8, 9, 3]            6     3 <-> 6     [1, 2, 3, 8, 9, 5]
+4    [8, 9, 5]               6     4 <-> 6     [1, 2, 3, 5, 9, 8]
+5    [9, 8]                  6     5 <-> 6     [1, 2, 3, 5, 8, 9]
+Tong: so sanh = 15, doi cho = 5
+--- bench ---
+KHOA SAT DT011 - seed = 20261020
+So sanh ly thuyet: n(n-1)/2; so doi toi da: n-1
+
+     n    so sanh   doi chon    doi doi     t_chon(ms)      t_doi(ms)  tiledoi
+------ --------- --------- --------- ------------- ------------- -------
+     5         10          4          6         0.0006         0.0002     0.67
+    20        190         15        111         0.0009         0.0006     0.14
+   100       4950         93       2383         0.0060         0.0070     0.04
+   500     124750        492      64815         0.1692         0.1191     0.01
+
+Ghi chu: thoi gian chi de tham khao tren may ca nhan; ket luan do phuc tap
+dua tren so phep so sanh dem duoc, khong dua tren thoi gian do.
